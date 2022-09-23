@@ -1,6 +1,4 @@
-# This is a sample Python script.
-
-# Functions for scraping
+# Helper functions
 import sys
 
 def main(name):
