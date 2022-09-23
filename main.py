@@ -2,75 +2,57 @@ import spacy
 import numpy as np
 from spacy import displacy
 import pickle as pk
-from os import getcwd
 import pandas as pd
 import json
 from google_play_scraper import app
 import datetime
 import seaborn as sns
+from sklearn.preprocessing import OneHotEncoder
 from transformers import AutoModelForSequenceClassification
 from transformers import TFAutoModelForSequenceClassification
 from transformers import AutoTokenizer, AutoConfig
-from google_play_scraper import Sort, reviews_all ,reviews
 import numpy as np
 from scipy.special import softmax
 import helper as tr
-
-nlp = spacy.load('en_core_web_sm')
-MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
-
 from app_store_scraper import AppStore
 import random
 import pandas as pd
 import datetime as dt
 import numpy as np
-
+import scrapers as sc
 import json
+nlp = spacy.load('en_core_web_sm')
 
 applist = [('Singtel', 'com.singtel.mysingtel'), ('Starhub', 'com.starhub.csselfhelp')]
 
-df_msta = []
-for name, apps in applist:
-    all_reviews, _ = reviews(apps,
-                        # sleep_milliseconds=0,  # defaults to 0
-                          lang='en',  # defaults to 'en'
-                          country='sg',  # defaults to 'us'
-                          sort=Sort.NEWEST,
-                          count = 10000
-                         )
+#Call scraping function
+df_msta = sc.get_reviews(applist)
 
-    df = pd.DataFrame(np.array(all_reviews), columns=['review'])
-    df = df.join(pd.DataFrame(df.pop('review').tolist()))
-    df['app'] = name
-    df['platform'] = 'android'
-    columns = list(df)
-    appendlist = df.values.tolist()
-    for entry in appendlist:
-        df_msta.append(entry)
-
-df_msta = pd.DataFrame(df_msta)
-df_msta.columns = columns
-
-
+#Set date ranges for analysis
 df_msta = df_msta.loc[df_msta['at'].between('2020-01-01', '2022-12-31')]
-#removing NAs
-df_msta = df_msta.dropna(subset=['content']).reset_index()
-df_msta.isnull().sum()
+
+
+#WHEN 429 DURING TRIAL
 '''
 df_msta = pd.read_csv('app_scores.csv')
 df_msta = df_msta.loc[df_msta['at'].between('2022-06-01', '2022-12-31')]
 df_msta = df_msta.reset_index(drop = True)
 '''
+
+#Calling model from huggingface repo and instantiating transformer model
+MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 config = AutoConfig.from_pretrained(MODEL)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL)
 
+
+#for loop for sentiment extraction
 reviews = {}
 
 for i in range(len(df_msta["content"])):
     if i % 50 == 0:
       print('i = {}'.format(i))
-    doc = nlp(df_msta["content"][i])
+    doc = nlp(df_msta["content"][i]) #HOW TO SPLIT SENTENCES WITHOUT SPACY??!??!
     review_sents =[]
     ex = i
     for idx, sentence in enumerate(doc.sents):
@@ -94,11 +76,11 @@ for items in reviews.items():
 final_df = pd.DataFrame(my_list)
 loc = pd.DataFrame.from_records(final_df[0], columns=['neg','neu','pos'])
 final_df = final_df.drop(0, axis=1).join(loc)
-final_df.columns = ['text','date','app','rating','platform', 'neg','neu','pos']
+final_df.columns = ['text','date','app','rating','platform','neg','neu','pos']
 
 final_df['sentiment'] = final_df[['neg','neu','pos']].idxmax(axis=1)
 
-from sklearn.preprocessing import OneHotEncoder
+
 
 #creating instance of one-hot-encoder
 encoder = OneHotEncoder(handle_unknown='ignore')

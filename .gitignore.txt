@@ -79,6 +79,7 @@ celerybeat-schedule
 .env
 
 # idea
+.idea
 .idea/
 idea/
 # virtualenv
