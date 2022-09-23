@@ -26,10 +26,11 @@ nlp = spacy.load('en_core_web_sm')
 applist = [('Singtel', 'com.singtel.mysingtel'), ('Starhub', 'com.starhub.csselfhelp')]
 
 #Call scraping function
-df_msta = sc.get_reviews(applist)
+df_msta = sc.get_reviews(applist, 2500)
 
 #Set date ranges for analysis
 df_msta = df_msta.loc[df_msta['at'].between('2020-01-01', '2022-12-31')]
+df_msta = df_msta.reset_index(drop = True)
 
 
 #WHEN 429 DURING TRIAL
@@ -52,7 +53,7 @@ reviews = {}
 for i in range(len(df_msta["content"])):
     if i % 50 == 0:
       print('i = {}'.format(i))
-    doc = nlp(df_msta["content"][i]) #HOW TO SPLIT SENTENCES WITHOUT SPACY??!??!
+    doc = nlp(df_msta["content"][i]) #HOW TO SPLIT INTO INDIVIDUAL SENTENCES WITHOUT SPACY?????
     review_sents =[]
     ex = i
     for idx, sentence in enumerate(doc.sents):

@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 
-def get_reviews(applist):
+def get_reviews(applist, count):
     df_combined = []
     for name, apps in applist:
         all_reviews, _ = reviews(apps,
@@ -13,7 +13,7 @@ def get_reviews(applist):
                           lang='en',  # defaults to 'en'
                           country='sg',  # defaults to 'us'
                           sort=Sort.NEWEST,
-                          count = 10
+                          count = count
                          )
         df = pd.DataFrame(np.array(all_reviews), columns=['review'])
         df = df.join(pd.DataFrame(df.pop('review').tolist()))
